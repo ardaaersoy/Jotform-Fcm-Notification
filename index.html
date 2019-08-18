@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<title>JotForm Push Notification with FCM</title>
+
+<body>
+    <p id="d_output" style="color: green;"></p>
+    <p id="d_token"></p>
+    <p id="d_notification" style="color: blue;"></p>
+    <p id="d_error" style="color: red;"></p>
+
+    <!-- Load Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-database.js"></script>
+    <script>
+        output = document.getElementById("d_output");
+        token = document.getElementById("d_token");
+        notification = document.getElementById("d_notification");
+        error = document.getElementById("d_error");
+
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyByatHSOfOZpQhsX-BqDmbiCGCXAHOZ9R4",
+            authDomain: "jotform-bff93.firebaseapp.com",
+            databaseURL: "https://jotform-bff93.firebaseio.com",
+            projectId: "jotform-bff93",
+            storageBucket: "jotform-bff93.appspot.com",
+            messagingSenderId: "542566846482",
+            appId: "1:542566846482:web:165534f99570e93e"
+        };
+        firebase.initializeApp(config);
+
+        const messaging = firebase.messaging();
+        messaging.requestPermission()
+            .then(function() {
+                output.innerHTML = "Notification permission granted.";
+                console.log("Notification permission granted.");
+                return messaging.getToken();
+            })
+            .then(function(tkn) {
+                token.innerHTML = "Token is : " + tkn;
+                console.log("Token is : ", tkn);
+            })
+            .catch(function(err) {
+                error.innerHTML = error.innerHTML + "; " + err;
+                console.log("Unable to get permission to notify. ", err);
+            });
+
+        messaging.onMessage(function(payload) {
+            console.log("Message received. ", payload);
+            notification.innerHTML = notification.innerHTML + JSON.stringify(payload);
+
+            // Write data to Firebase DB
+            var database = firebase.database().ref();
+
+            var email = payload.data['gcm.notification.email'];
+            var note = payload.data['gcm.notification.note'];
+
+            function writeUserData(email, note) {
+                database.push({
+                    e_mail: email,
+                    e_note: note
+                });
+            }
+            writeUserData(email, note);
+        });
+    </script>
+</body>
+
+</html>
